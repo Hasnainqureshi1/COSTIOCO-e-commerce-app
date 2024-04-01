@@ -1,12 +1,24 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import { StyleSheet, Text, View } from "react-native";
+import { ModalPortal } from "react-native-modals";
+import { Provider, useDispatch } from "react-redux";
+import StackNavigator from "./navigation/StackNavigator";
+import store from "./store";
+import { UserContext } from "./UserContext";
+import { useEffect } from "react";
+import { loadCartFromStorage } from "./components/storage";
 
 export default function App() {
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <>
+  <Provider store={store}>
+        <UserContext>
+          <StackNavigator />
+          <ModalPortal />
+        </UserContext>
+      </Provider>
+    </>
   );
 }
 
