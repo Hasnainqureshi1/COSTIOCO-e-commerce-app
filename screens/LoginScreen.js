@@ -32,11 +32,14 @@ const LoginScreen = () => {
       } else {
         // No user is logged in
         await AsyncStorage.setItem('isLoggedIn', 'false');
-        navigation.replace('Login');
+        // Prevent navigation to 'Login' to avoid loop, since we're already on the login screen
       }
     });
-    return unsubscribe; // Remember to unsubscribe on component unmount
+  
+    // Cleanup function
+    return () => unsubscribe();
   }, []);
+  
   
   const handleLogin = async () => {
     if (!email || !password) {

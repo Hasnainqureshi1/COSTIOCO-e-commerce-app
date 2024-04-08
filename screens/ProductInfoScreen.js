@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,6 +10,7 @@ import {
   Dimensions,
   ToastAndroid,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SliderBox } from "react-native-image-slider-box";
 import {
@@ -20,15 +21,98 @@ import {
 } from "@expo/vector-icons";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/CartReducer";
-
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { firestore } from "../firebase/config";
+ 
 const { width } = Dimensions.get("window");
 
 const ProductInfoScreen = () => {
+  const route = useRoute()
+  console.log("ProductInfo")
+  const navigation = useNavigation();
+ 
+  const product = route.params;
+   console.log(product)
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const dispatch = useDispatch();
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [shop, setShop] = useState(null);
+  const fetchReviewsAndUserNames = async () => {
+    if (!product.id) return;
+    setLoading(true);
 
+    // Step 1: Fetch reviews for the given product ID
+    const reviewsQuery = query(collection(firestore, "reviews"), where("prod_id", "==", product.id));
+    const reviewsSnapshot = await getDocs(reviewsQuery);
+    
+    // Step 2: Fetch user data for each review
+    const reviewsWithUserNamesPromises = reviewsSnapshot.docs.map(async (docs) => {
+      const reviewData = docs.data();
+      const userRef = doc(firestore, "app_users", reviewData.user_id);
+      const userSnap = await getDoc(userRef);
+
+      return {
+        ...reviewData,
+        userName: userSnap.exists() ? userSnap.data().name : "Unknown User", // Assuming the user's name field is called "name"
+      };
+    });
+    
+    // Wait for all user names to be fetched
+    const reviewsWithUserNames = await Promise.all(reviewsWithUserNamesPromises);
+
+    setReviews(reviewsWithUserNames);
+    
+    setLoading(false);
+  };
+  const fetchShop = async () => {
+    if (!product.seller_id) return;
+    setLoading(true);
+
+    // Assuming each shop has a 'sellerId' field that matches the seller's ID
+    // And assuming there's a direct relationship between a seller and their shop
+    const shopRef = doc(firestore, "shop", product.seller_id); // This assumes shop IDs are the same as seller IDs
+    // If shops are stored under a different ID, you might need to adjust this query to use where() instead of doc()
+    const shopSnap = await getDoc(shopRef);
+
+    if (shopSnap.exists()) {
+      setShop({ id: shopSnap.id, ...shopSnap.data() });
+ 
+    } else {
+      console.log("No such shop!");
+      setShop(null);
+    }
+
+    setLoading(false);
+  };
+  useEffect(() => {
+    fetchShop();
+    fetchReviewsAndUserNames();
+  }, []);
+  if(loading){
+    return <ActivityIndicator size={'large'}/>
+  }
   const handleAddToCart = () => {
-    dispatch(addToCart({ id: product.id, ...product }));
+    const { createdAt, ...productWithoutCreatedAt } = product;
+    console.log(shop)
+    // console.log(productWithoutCreatedAt)
+    const itemToAdd = {
+      id:product.id,
+      images: product.images,
+      name: product.name,
+      price: product.price, 
+      storeName:shop.storeName,
+      seller_id:shop.id,
+      address:shop.address,
+      
+
+        
+  };
+  console.log(itemToAdd)
+ // Dispatch the action with both product and shop data
+ dispatch(addToCart(itemToAdd));
+
     setIsAddedToCart(true);
     // Show toast notification
     if (Platform.OS === 'android') {
@@ -38,32 +122,23 @@ const ProductInfoScreen = () => {
       alert('Item added to cart!'); // Simple fallback
     }
   };
-  // Dummy data for product details and reviews
-  const product = {
-    id:1,
-    image: "https://via.placeholder.com/150",
-    title: "RS-X Men Sneaker",
-    price: "$85.00",
-    rating: 4.5,
-    soldCount: "8,374",
-    description:
-      "Lorem ipsum dolor sit amet consectetur. Porta at eget vitae convallis suspendisse. ipsum dolor sit amet consectetur. Porta at eget.",
-    reviews: [
-      {
-        id: "1",
-        author: "John Doe",
-        rating: 5,
-        text: "Great sneakers! Super comfortable and stylish.",
-      },
-      {
-        id: "2",
-        author: "Jane Smith",
-        rating: 4,
-        text: "Really good quality for the price. Would recommend.",
-      },
-    ],
-  };
+  const buyNow = ()=>{
+    const { createdAt, ...productWithoutCreatedAt } = product;
+    const itemToAdd = {
+      id:product.id,
+      images: product.images,
+      name: product.name,
+      price: product.price, 
+      storeName:shop.storeName,
+      seller_id:shop.id,
+      address:shop.address,
+      
 
+        
+  };
+  dispatch(addToCart(itemToAdd));
+  navigation.navigate('Cart')
+  }
   // Function to render stars based on rating
   const renderStars = (rating) => {
     let stars = [];
@@ -85,29 +160,32 @@ const ProductInfoScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <SliderBox
-          images={["https://example.com/image1.jpg"]}
-          sliderBoxHeight={250}
+          images={product.images}
+          sliderBoxHeight={350}
           dotColor="#FFEE58"
           inactiveDotColor="#90A4AE"
         />
-        <Text style={styles.title}>{product.title}</Text>
-        <Text style={styles.productPrice}>{product.price}</Text>
+        <Text style={styles.title}>{product.name}</Text>
+        <Text style={styles.productPrice}>${product.price}</Text>
 
         {/* Product Description */}
         <Text style={styles.description}>{product.description}</Text>
         {/* shop info  */}
         <View style={styles.shopInfo}>
-    <Text style={styles.shopName}>Shop Name</Text>
-    <Text style={styles.shopName}>Shop Address</Text>
+    <Text style={styles.shopName}>Store Name: {shop?.storeName}</Text>
+    <Text style={styles.shopName}>Address: {shop?.address}</Text>
         </View>
 
         {/* Reviews Section */}
         <Text style={styles.subTitle}>Reviews</Text>
-        {product.reviews.map((review) => (
+        {reviews.map((review) => (
           <View key={review.id} style={styles.review}>
-            <Text style={styles.reviewAuthor}>{review.author}</Text>
+            <View>
+
+            </View>
+            <Text style={styles.reviewAuthor}>{review.userName}</Text>
             <View style={styles.stars}>{renderStars(review.rating)}</View>
-            <Text style={styles.reviewText}>{review.text}</Text>
+            <Text style={styles.reviewText}>{review.comment}</Text>
           </View>
         ))}
       </ScrollView>
@@ -123,7 +201,7 @@ const ProductInfoScreen = () => {
             {isAddedToCart ? "Added to Cart" : "Add to Cart"}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.buyNowButton]}>
+        <TouchableOpacity style={[styles.actionButton, styles.buyNowButton]}     onPress={() => buyNow()}>
           <Text style={styles.actionButtonText}>Buy Now</Text>
         </TouchableOpacity>
       </View>
@@ -253,6 +331,9 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#e1e1e1",
+    borderTopColor: "#e1e1e1",
+    borderTopWidth:1,
+    paddingTop:5,
   },
   reviewAuthor: {
     fontWeight: "bold",

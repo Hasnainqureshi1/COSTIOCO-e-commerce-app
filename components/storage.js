@@ -12,9 +12,8 @@ export const saveCartToStorage = async (cart) => {
 export const loadCartFromStorage = async () => {
   try {
     const jsonValue = await AsyncStorage.getItem('@cart');
-    console.log(jsonValue);
-    
-    console.log("caling from storage");
+   
+ 
     return jsonValue != null ? JSON.parse(jsonValue) : null;
   } catch (e) {
     console.log("Error loading cart from storage", e);

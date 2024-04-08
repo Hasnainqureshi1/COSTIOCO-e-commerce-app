@@ -18,15 +18,15 @@ const renderStars = (rating) => {
  );
 };
 
-const ShopList = ({bestSellers}) => {
+const ShopList = ({shops}) => {
  const navigation = useNavigation();
  const renderItem = ({ item }) => (
   <TouchableOpacity style={style.itemContainer} onPress={() => navigation.navigate("Shop", { ...item })} key={item.id}>
   
-    <Image source={{ uri: item.imageUri }} style={style.image} />
+    <Image source={{ uri: item.imageUrl }} style={style.image} />
     <View style={style.shopBottom}>
-    <Text style={style.shopName}>{item.shopName}</Text>
-    {renderStars(item.rating)}
+    <Text style={style.shopName}>{item.storeName}</Text>
+    {/* {renderStars(item.rating)} */}
  
     </View>
     <Text style={style.category}>{item.category}</Text>
@@ -34,7 +34,7 @@ const ShopList = ({bestSellers}) => {
  );
   return (
    <FlatList
-   data={bestSellers} // Assuming bestSellers data is defined
+   data={shops} 
    renderItem={renderItem}
    keyExtractor={item => item.id}
    numColumns={1}

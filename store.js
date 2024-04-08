@@ -12,8 +12,7 @@ const store = configureStore({
 // Subscribe to store updates to save the cart state
 store.subscribe(() => {
     const cart = store.getState().cart.cart;
-    console.log("cart");
-    console.log(cart);
+    
     saveCartToStorage(cart);
   });
   

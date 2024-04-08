@@ -25,6 +25,12 @@ import CartScreen from './../screens/CartScreen';
 import ProductInfoScreen from "../screens/ProductInfoScreen";
 import Search from "../components/Search";
 import ShopScreen from "../screens/ShopScreen";
+import PaymentMethodScreen from "../screens/PaymentMethodScreen";
+import CheckoutScreen from "../screens/CheckoutScreen";
+import PaymentOptionsScreen from "../screens/PaymentOptionScreen";
+import OrderHistory from "../screens/OrderHistory";
+import YourAccountScreen from "../screens/YourAccountScreen";
+import UserReviews from "../screens/UserReviews";
 
 const StackNavigator = () => {
   const Stack = createNativeStackNavigator();
@@ -135,14 +141,56 @@ const StackNavigator = () => {
             // Adjust other header options as needed
           }}
         />
+         
          <Stack.Screen
           name="Confirm"
-          component={ConfirmationScreen}
+          component={CheckoutScreen}
           options={{
             headerShown: false,
-           
-            // headerTitle: () => <Search />,
-            // Adjust other header options as needed
+    
+          }}
+        />
+         <Stack.Screen
+          name="Payment"
+          component={PaymentOptionsScreen}
+          options={{
+            headerShown: false,
+    
+          }}
+        />
+         <Stack.Screen
+          name="OrderScreen"
+          component={OrderScreen}
+          options={{
+            headerShown: false,
+    
+          }}
+        />
+         <Stack.Screen
+          name="OrderHistory"
+          component={OrderHistory}
+          options={{
+            headerShown: true,
+            headerTitle:"Order History"
+    
+          }}
+        />
+         <Stack.Screen
+          name="YourAccountScreen"
+          component={YourAccountScreen}
+          options={{
+            headerShown: true,
+            headerTitle:"Your Account Details",
+    
+          }}
+        />
+         <Stack.Screen
+          name="UserReviews"
+          component={UserReviews}
+          options={{
+            headerShown: true,
+            headerTitle:"Reviews",
+    
           }}
         />
       

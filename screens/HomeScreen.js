@@ -11,28 +11,35 @@ import {
   FlatList,
   TouchableOpacity,
   Button,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState, useEffect, useCallback, useContext } from "react";
-import { Feather } from "@expo/vector-icons";
-import { Ionicons } from "@expo/vector-icons";
+
 import { MaterialIcons } from "@expo/vector-icons";
-import { Entypo } from "@expo/vector-icons";
-import { AntDesign } from "@expo/vector-icons";
-import { SliderBox } from "react-native-image-slider-box";
-// import axios from "axios";
+
 import ProductItem from "../components/ProductItem";
-import DropDownPicker from "react-native-dropdown-picker";
+import { RefreshControl } from "react-native";
+
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { BottomModal, SlideAnimation, ModalContent } from "react-native-modals";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import style from "../Style/style";
-import BestSellersComponent from "../components/BestSeller";
+
 import BestSellers from "../components/BestSeller";
 import Search from "../components/Search";
 import ProductList from "../components/ProductList";
 import { loadCartFromStorage } from "../components/storage";
 import { setCart } from "../redux/CartReducer";
+import { auth, firestore } from "../firebase/config";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+} from "firebase/firestore";
 // import { UserType } from "../UserContext";
 // import jwt_decode from "jwt-decode";
 
@@ -48,222 +55,191 @@ const HomeScreen = () => {
 
     loadCart();
   }, [dispatch]);
-  const list = [
-    {
-      id: "0",
-      image: "https://m.media-amazon.com/images/I/41EcYoIZhIL._AC_SY400_.jpg",
-      name: "Home",
-    },
-    {
-      id: "1",
-      image:
-        "https://m.media-amazon.com/images/G/31/img20/Events/Jup21dealsgrid/blockbuster.jpg",
-      name: "Deals",
-    },
-    {
-      id: "3",
-      image:
-        "https://images-eu.ssl-images-amazon.com/images/I/31dXEvtxidL._AC_SX368_.jpg",
-      name: "Electronics",
-    },
-    {
-      id: "4",
-      image:
-        "https://m.media-amazon.com/images/G/31/img20/Events/Jup21dealsgrid/All_Icons_Template_1_icons_01.jpg",
-      name: "Mobiles",
-    },
-    {
-      id: "5",
-      image:
-        "https://m.media-amazon.com/images/G/31/img20/Events/Jup21dealsgrid/music.jpg",
-      name: "Music",
-    },
-    {
-      id: "6",
-      image: "https://m.media-amazon.com/images/I/51dZ19miAbL._AC_SY350_.jpg",
-      name: "Fashion",
-    },
-  ];
 
-  const offers = [
-    {
-      id: "0",
-      title:
-        "Oppo Enco Air3 Pro True Wireless in Ear Earbuds with Industry First Composite Bamboo Fiber, 49dB ANC, 30H Playtime, 47ms Ultra Low Latency,Fast Charge,BT 5.3 (Green)",
-      offer: "72% off",
-      oldPrice: 7500,
-      price: 4500,
-      image:
-        "https://m.media-amazon.com/images/I/61a2y1FCAJL._AC_UL640_FMwebp_QL65_.jpg",
-      carouselImages: [
-        "https://m.media-amazon.com/images/I/61a2y1FCAJL._SX679_.jpg",
-        "https://m.media-amazon.com/images/I/71DOcYgHWFL._SX679_.jpg",
-        "https://m.media-amazon.com/images/I/71LhLZGHrlL._SX679_.jpg",
-        "https://m.media-amazon.com/images/I/61Rgefy4ndL._SX679_.jpg",
-      ],
-      color: "Green",
-      size: "Normal",
-    },
-    {
-      id: "1",
-      title:
-        "Fastrack Limitless FS1 Pro Smart Watch|1.96 Super AMOLED Arched Display with 410x502 Pixel Resolution|SingleSync BT Calling|NitroFast Charging|110+ Sports Modes|200+ Watchfaces|Upto 7 Days Battery",
-      offer: "40%",
-      oldPrice: 7955,
-      price: 3495,
-      image: "https://m.media-amazon.com/images/I/41mQKmbkVWL._AC_SY400_.jpg",
-      carouselImages: [
-        "https://m.media-amazon.com/images/I/71h2K2OQSIL._SX679_.jpg",
-        "https://m.media-amazon.com/images/I/71BlkyWYupL._SX679_.jpg",
-        "https://m.media-amazon.com/images/I/71c1tSIZxhL._SX679_.jpg",
-      ],
-      color: "black",
-      size: "Normal",
-    },
-    {
-      id: "2",
-      title: "Aishwariya System On Ear Wireless On Ear Bluetooth Headphones",
-      offer: "40%",
-      oldPrice: 7955,
-      price: 3495,
-      image: "https://m.media-amazon.com/images/I/41t7Wa+kxPL._AC_SY400_.jpg",
-      carouselImages: ["https://m.media-amazon.com/images/I/41t7Wa+kxPL.jpg"],
-      color: "black",
-      size: "Normal",
-    },
-    {
-      id: "3",
-      title:
-        "Fastrack Limitless FS1 Pro Smart Watch|1.96 Super AMOLED Arched Display with 410x502 Pixel Resolution|SingleSync BT Calling|NitroFast Charging|110+ Sports Modes|200+ Watchfaces|Upto 7 Days Battery",
-      offer: "40%",
-      oldPrice: 24999,
-      price: 19999,
-      image: "https://m.media-amazon.com/images/I/71k3gOik46L._AC_SY400_.jpg",
-      carouselImages: [
-        "https://m.media-amazon.com/images/I/41bLD50sZSL._SX300_SY300_QL70_FMwebp_.jpg",
-        "https://m.media-amazon.com/images/I/616pTr2KJEL._SX679_.jpg",
-        "https://m.media-amazon.com/images/I/71wSGO0CwQL._SX679_.jpg",
-      ],
-      color: "Norway Blue",
-      size: "8GB RAM, 128GB Storage",
-    },
-  ];
   const [products, setProducts] = useState([]);
+  const [products1, setProducts1] = useState([]);
   const navigation = useNavigation();
   const [open, setOpen] = useState(false);
-  const [addresses, setAddresses] = useState([]);
-  const [category, setCategory] = useState("jewelery");
-  // const { userId, setUserId } = useContext(UserType);
-  const [selectedAddress, setSelectedAdress] = useState("");
-  console.log(selectedAddress);
+  
+  // const [category, setCategory] = useState("jewelery");
+  const [User, setUser] = useState();
+  const [categories, setCategories] = useState([]);
+  const [loading, setloading] = useState(true);
+  const [ploading, setploading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [items, setItems] = useState([
     { label: "Men's clothing", value: "men's clothing" },
     { label: "jewelery", value: "jewelery" },
     { label: "electronics", value: "electronics" },
     { label: "women's clothing", value: "women's clothing" },
   ]);
-  
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const response = await axios.get("https://fakestoreapi.com/products");
-  //       setProducts(response.data);
-  //     } catch (error) {
-  //       console.log("error message", error);
-  //     }
-  //   };
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
 
-  //   fetchData();
-  // }, []);
-  const onGenderOpen = useCallback(() => {
-    setCompanyOpen(false);
+    return () => unsubscribe();
+  }, []);
+  //fetching categories
+  const fetchShops = async () => {
+    setloading(true);
+    const querySnapshot = await getDocs(collection(firestore, "shop"));
+    const allCategories = [];
+
+    querySnapshot.forEach((doc) => {
+      const shopData = doc.data();
+
+      // Assuming each shop document has a categories array
+      allCategories.push(shopData.category);
+    });
+
+    // Use a Set to remove duplicate categories
+    const uniqueCategories = Array.from(new Set(allCategories));
+    setCategories(uniqueCategories);
+
+    setloading(false);
+  };
+
+  //fetch recent products
+
+  const [Productloading, setProductLoading] = useState(true);
+  const fetchRecentProducts = async () => {
+    try {
+      // Define the query to fetch the most recent products
+      const q = query(
+        collection(firestore, "products"),
+        orderBy("createdAt", "desc"),
+        limit(10)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const recentProducts = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setProducts(recentProducts);
+    } catch (error) {
+      console.error("Failed to fetch recent products:", error);
+    } finally {
+      setProductLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchShops();
+    fetchBestProducts();
+    fetchRecentProducts();
   }, []);
 
-  const cart = useSelector((state) => state.cart.cart);
- 
-  // useEffect(() => {
-  //   if (userId) {
-  //     fetchAddresses();
-  //   }
-  // }, [userId, modalVisible]);
-  // const fetchAddresses = async () => {
-  //   try {
-  //     const response = await axios.get(
-  //       `http://localhost:8000/addresses/${userId}`
-  //     );
-  //     const { addresses } = response.data;
+  const fetchBestProducts = async () => {
+    setploading(true);
 
-  //     setAddresses(addresses);
-  //   } catch (error) {
-  //     console.log("error", error);
-  //   }
-  // };
-  // useEffect(() => {
-  //   const fetchUser = async () => {
-  //     const token = await AsyncStorage.getItem("authToken");
-  //     const decodedToken = jwt_decode(token);
-  //     const userId = decodedToken.userId;
-  //     setUserId(userId);
-  //   };
+    // Fetch all reviews
+    const reviewsQuery = query(collection(firestore, "reviews"));
+    const reviewsSnapshot = await getDocs(reviewsQuery);
 
-  //   fetchUser();
-  // }, []);
-  const FavoriteHeader = () => {
-    const favorites = useSelector((state) => state.cart.favorites);
-    return (
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: 10,
-        }}
-      >
-        <Text>My App</Text>
-        <TouchableOpacity
-          onPress={() => {
-            /* navigate to favorites screen if needed */
-          }}
-        >
-          <Text>Favorites ({favorites.length})</Text>
-        </TouchableOpacity>
-      </View>
+    // Aggregate reviews by product_id and calculate total count and average rating
+    const reviewAggregates = reviewsSnapshot.docs.reduce((acc, doc) => {
+      const { prod_id, rating } = doc.data();
+
+      if (!acc[prod_id]) {
+        acc[prod_id] = { totalReviews: 0, totalRating: 0 };
+      }
+      acc[prod_id].totalReviews += 1;
+      acc[prod_id].totalRating += rating;
+      return acc;
+    }, {});
+
+    // Prepare data with average ratings
+    const productsWithReviews = Object.entries(reviewAggregates)
+      .map(([productId, { totalReviews, totalRating }]) => ({
+        productId,
+        totalReviews,
+        averageRating: totalRating / totalReviews,
+      }))
+      .sort((a, b) => b.totalReviews - a.totalReviews); // Sort by totalReviews in descending order
+
+    // Fetch products by sorted order of productIds that have reviews
+    const fetchedProducts = await Promise.all(
+      productsWithReviews.map(
+        async ({ productId, totalReviews, averageRating }) => {
+          const productRef = doc(firestore, "products", productId);
+          const productSnap = await getDoc(productRef);
+          console.log(productSnap.data());
+          if (productSnap.exists()) {
+            return {
+              id: productSnap.id,
+              ...productSnap.data(),
+              totalReviews,
+              averageRating,
+              productId,
+            };
+          } else {
+            return null; // Handle case where product might not exist
+          }
+        }
+      )
     );
+
+    // Filter out any null entries (in case some products didn't exist)
+    const validProducts = fetchedProducts.filter((product) => product !== null);
+
+    console.log("Valid Products with Reviews", validProducts);
+    setProducts1(validProducts);
+    setploading(false);
   };
+
+  const cart = useSelector((state) => state.cart.cart);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+
+    await fetchShops();
+    await fetchBestProducts();
+    await fetchRecentProducts();
+    setRefreshing(false);
+  }, []);
+
   const renderItem = ({ item }) => {
- 
     return (
       <View style={style.ProductitemContainer}>
         <Pressable
           onPress={() => navigation.navigate("Info", { ...item })}
           style={style.Productpressable}
         >
-          <Image style={style.Productimage} source={{ uri: item?.image }} />
+          <Image style={style.Productimage} source={{ uri: item?.images[0] }} />
           <View style={style.buyNowContainer}>
             <Text style={style.buyNowText}>
-              {item.title.split(" ").length > 3
-                ? item.title.split(" ").slice(0, 3).join(" ") + "..."
-                : item.title}
+              {item.name.split(" ").length > 3
+                ? item.name.split(" ").slice(0, 3).join(" ") + "..."
+                : item.name}
             </Text>
             <View style={style.productBottomRP}>
-              <Text style={style.productTitle}>$ 50</Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <MaterialIcons name="star" size={18} color="gold" />
-                <Text style={style.ratingTitle}>3.5/5 (2)</Text>
-              </View>
+              <Text style={style.productTitle}>$ {item.price}</Text>
+              {item.totalReviews && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <MaterialIcons name="star" size={18} color="gold" />
+                  <Text
+                    style={style.ratingTitle}
+                  >{`${item.averageRating.toFixed(1)} / 5 (${
+                    item.totalReviews
+                  })`}</Text>
+                </View>
+              )}
             </View>
           </View>
         </Pressable>
       </View>
     );
   };
-  console.log("address", addresses);
+
   return (
     <>
       <SafeAreaView
@@ -271,32 +247,39 @@ const HomeScreen = () => {
           paddinTop: Platform.OS === "android" ? 40 : 0,
 
           flex: 1,
-       
+
           backgroundColor: "white",
         }}
       >
-        <ScrollView disableScrollViewPanResponder={true}>
-          <Search/>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {/* <Search /> */}
           <View style={{ paddingLeft: 12, paddingTop: 10 }}>
             <Text style={style.title}>Category</Text>
           </View>
           {/* Categoies  */}
-          <View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {list.map((item, index) => (
-                <Pressable
-                  key={index}
-                  style={style.Categorybutton}
-                  onPress={() =>
-                    navigation.navigate("CategoryScreen", { index })
-                  }
-                >
-                  <Text style={style.buttonText}>{item?.name}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-
+          {loading ? (
+            <ActivityIndicator />
+          ) : (
+            <View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {categories.map((item, index) => (
+                  <Pressable
+                    key={index}
+                    style={style.Categorybutton}
+                    onPress={() =>
+                      navigation.navigate("CategoryScreen", { item })
+                    }
+                  >
+                    <Text style={style.buttonText}>{item}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          )}
           <Text
             style={{
               height: 1,
@@ -309,15 +292,23 @@ const HomeScreen = () => {
           <Text style={{ padding: 10, fontSize: 18, fontWeight: "bold" }}>
             Best Selling
           </Text>
-
-          <ProductList item={offers} horizontal={true} col = {1} />
-
+          {loading ? (
+            <ActivityIndicator />
+          ) : (
+            <FlatList
+              data={products1}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            />
+          )}
           <Text style={{ padding: 10, fontSize: 18, fontWeight: "bold" }}>
             New Arrivals
           </Text>
 
           <FlatList
-            data={offers}
+            data={products}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
             horizontal
@@ -343,23 +334,9 @@ const HomeScreen = () => {
               width: "45%",
               marginBottom: open ? 50 : 15,
             }}
-          >
-            
-          </View>
+          ></View>
 
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            {products
-              ?.filter((item) => item.category === category)
-              .map((item, index) => (
-                <ProductItem item={item} key={index} />
-              ))}
-          </View>
+       
         </ScrollView>
       </SafeAreaView>
     </>
@@ -411,7 +388,6 @@ const styles = StyleSheet.create({
 });
 
 // const styles = StyleSheet.create({});
-
 
 const renderStars = (rating) => {
   const fullStars = Math.floor(rating);

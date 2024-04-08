@@ -39,7 +39,9 @@ export default StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     // marginTop: 5,
-    color: "#FEBE10",
+    color: "#1b1810",
+    // borderBottomWidth:0.2,
+    // borderBottomColor:"#eee"
 
     // marginTop: 8,
   },
@@ -120,7 +122,7 @@ export default StyleSheet.create({
     borderRadius: 4,
   },
   buyNowText: {
-    textAlign: 'center',
+    textAlign: 'left',
     color: 'black',
     fontSize: 13,
     fontWeight: 'bold',

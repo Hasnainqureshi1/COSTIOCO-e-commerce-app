@@ -10,63 +10,28 @@ import React, { useLayoutEffect, useEffect, useContext, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 import axios from "axios";
-import { UserType } from "../UserContext";
+ 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { auth } from "../firebase/config";
 
 const ProfileScreen = () => {
-  const { userId, setUserId } = useContext(UserType);
+  // const { userId, setUserId } = useContext(UserType);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: "",
-      headerStyle: {
-        backgroundColor: "#00CED1",
-      },
-      headerLeft: () => (
-        <Image
-          style={{ width: 140, height: 120, resizeMode: "contain" }}
-          source={{
-            uri: "https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c518.png",
-          }}
-        />
-      ),
-      headerRight: () => (
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 6,
-            marginRight: 12,
-          }}
-        >
-          <Ionicons name="notifications-outline" size={24} color="black" />
-
-          <AntDesign name="search1" size={24} color="black" />
-        </View>
-      ),
-    });
-  }, []);
+ 
   const [user, setUser] = useState();
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:8000/profile/${userId}`
-        );
-        const { user } = response.data;
-        setUser(user);
-      } catch (error) {
-        console.log("error", error);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
-  const logout = () => {
-    clearAuthToken();
+ 
+  const logout = async() => {
+    try {
+      await auth.signOut();
+      await AsyncStorage.removeItem('isLoggedIn');
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
+  
   const clearAuthToken = async () => {
     await AsyncStorage.removeItem("authToken");
     console.log("auth token cleared");
@@ -87,7 +52,7 @@ const ProfileScreen = () => {
       }
     };
 
-    fetchOrders();
+    // fetchOrders();
   }, []);
   console.log("orders", orders);
   return (
@@ -111,6 +76,7 @@ const ProfileScreen = () => {
             borderRadius: 25,
             flex: 1,
           }}
+          onPress={() => navigation.navigate("OrderHistory")}
         >
           <Text style={{ textAlign: "center" }}>Your orders</Text>
         </Pressable>
@@ -122,7 +88,8 @@ const ProfileScreen = () => {
             borderRadius: 25,
             flex: 1,
           }}
-        >
+          onPress={() => navigation.navigate("YourAccountScreen")}
+      >
           <Text style={{ textAlign: "center" }}>Your Account</Text>
         </Pressable>
       </View>
@@ -142,8 +109,9 @@ const ProfileScreen = () => {
             borderRadius: 25,
             flex: 1,
           }}
+          onPress={() => navigation.navigate("UserReviews")}
         >
-          <Text style={{ textAlign: "center" }}>Buy Again</Text>
+          <Text style={{ textAlign: "center" }}>Reviews</Text>
         </Pressable>
 
         <Pressable
@@ -159,39 +127,7 @@ const ProfileScreen = () => {
         </Pressable>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : orders.length > 0 ? (
-          orders.map((order) => (
-            <Pressable
-              style={{
-                marginTop: 20,
-                padding: 15,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: "#d0d0d0",
-                marginHorizontal: 10,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-              key={order._id}
-            >
-              {/* Render the order information here */}
-              {order.products.slice(0, 1)?.map((product) => (
-                <View style={{ marginVertical: 10 }} key={product._id}>
-                  <Image
-                    source={{ uri: product.image }}
-                    style={{ width: 100, height: 100, resizeMode: "contain" }}
-                  />
-                </View>
-              ))}
-            </Pressable>
-          ))
-        ) : (
-          <Text>No orders found</Text>
-        )}
-      </ScrollView>
+  
     </ScrollView>
   );
 };

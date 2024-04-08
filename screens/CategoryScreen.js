@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Image, StyleSheet, Pressable } from 'react-native';
+ 
+import { View, Text, TouchableOpacity, FlatList, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import style from '../Style/style';
-import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+ 
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { firestore } from '../firebase/config';
+// import { useNavigation, useRoute } from '@react-navigation/native';
 import ProductList from '../components/ProductList';
 import ShopList from '../components/ShopList';
+import { useRoute } from '@react-navigation/native';
 
 // Assuming bestSellers and offers data are imported or defined here
 const bestSellers = [
@@ -94,12 +99,87 @@ const offers = [
     size: "8GB RAM, 128GB Storage",
   },
 ];
-const CategoryScreen = () => {
-  const [activeTab, setActiveTab] = useState('products'); // 'products' or 'shops'
-  const navigation = useNavigation();
- 
+const CategoryScreen = ( ) => {
+  const route = useRoute();
   
+   const selectedCategory =route.params.item;
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+   
+  const [activeTab, setActiveTab] = useState('products'); // 'products' or 'shops'
+  useEffect(() => {
+    const fetchProductsByCategory = async () => {
+      setLoading(true);
 
+      // Step 1: Fetch shops matching the selected category
+      const shopsRef = collection(firestore, 'shop');
+      const qShops = query(shopsRef, where('category', '==', selectedCategory));
+      const shopSnapshot = await getDocs(qShops);
+      const shopUids = shopSnapshot.docs.map((doc) => doc.id);
+
+      // Step 2: Fetch products from these shops
+      const productsRef = collection(firestore, 'products');
+      const productsPromises = shopUids.map((uid) => {
+        const qProducts = query(productsRef, where('seller_id', '==', uid));
+        return getDocs(qProducts);
+      });
+      const productsSnapshots = await Promise.all(productsPromises);
+      let fetchedProducts = [];
+      productsSnapshots.forEach((snapshot) => {
+        const products = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        fetchedProducts = [...fetchedProducts, ...products];
+      });
+
+      // Step 3: Fetch reviews for these products and calculate review count and average rating
+      const reviewsRef = collection(firestore, 'reviews');
+      const productsWithReviews = await Promise.all(fetchedProducts.map(async (product) => {
+        const qReviews = query(reviewsRef, where('prod_id', '==', product.id));
+        const reviewsSnapshot = await getDocs(qReviews);
+        const reviews = reviewsSnapshot.docs.map((doc) => doc.data());
+        const reviewCount = reviews.length;
+        const avgRating = reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviewCount || 0;
+        return { ...product, reviews, reviewCount, avgRating };
+      }));
+      console.log(productsWithReviews)
+      setProducts(productsWithReviews);
+      setLoading(false);
+    };
+
+    fetchProductsByCategory();
+  }, [selectedCategory]);
+
+  // fetching shop
+  const [shops, setShops] = useState([]);
+  const [sloading, setsLoading] = useState(false);
+  const [lastVisible, setLastVisible] = useState(null); // Document snapshot to start next page fetch
+  const [hasMore, setHasMore] = useState(true);
+  
+   
+  
+    useEffect(() => {
+      const fetchShops = async () => {
+        if (!selectedCategory) return;
+  
+        const shopsRef = collection(firestore, 'shop');
+        const q = query(shopsRef, where('category', '==', selectedCategory));
+  
+        try {
+          const querySnapshot = await getDocs(q);
+          const fetchedShops = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setShops(fetchedShops);
+          console.log(fetchedShops);
+        } catch (error) {
+          console.error("Error fetching shops by category:", error);
+        }
+      };
+  
+      fetchShops();
+    }, [selectedCategory]);
+  
+   
   return (
     <View style={{ backgroundColor:'white',height:'100%'  }}>
       <View style={styles.tabsContainer}>
@@ -117,12 +197,16 @@ const CategoryScreen = () => {
         </TouchableOpacity>
       </View>
       {activeTab === 'products' && (
-            <ProductList item={offers} horizontal={false} col = {2} />
+        (loading ? <ActivityIndicator  size={'large'} style={{marginTop:20,}}/> :
+        
+          <ProductList item={products} horizontal={false} col = {2} />
+        )
 
       )}
-      {activeTab === 'shops' && (
-       <ShopList bestSellers= {bestSellers}/>
-      )}
+      {activeTab === 'shops'&& (
+        (loading ? <ActivityIndicator  size={'large'} style={{marginTop:20,}}/> :
+       <ShopList shops= {shops}/>
+      ))}
     </View>
   );
 };

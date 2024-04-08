@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { auth, firestore } from "../firebase/config"; // Make sure this path is correct
 import { MaterialIcons } from '@expo/vector-icons';
@@ -33,56 +33,65 @@ const SetPasswordScreen = () => {
   }, []);
 
   const handleSetPassword = async () => {
-   if (password !== confirmPassword) {
-     Alert.alert("Error", "Passwords do not match.");
-     return;
-   }
- 
-   setIsLoading(true); // Start loading
- 
-   try {
-     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-     const { uid } = userCredential.user;
-     
-     const requestRef = collection(firestore, "membership_request");
-     const q = query(requestRef, where("email", "==", email));
-     const querySnapshot = await getDocs(q);
- 
-     if (!querySnapshot.empty) {
-       for (const docSnapshot of querySnapshot.docs) {
-         const requestData = docSnapshot.data();
- 
-         await setDoc(doc(firestore, "users", uid), {
-           name: requestData.name,
-           email: requestData.email,
-           role: "member",
-         });
- 
-         await setDoc(doc(firestore, "app_users", uid), {
-           ...requestData,
-         });
-       }
-       
-       Alert.alert("Success", "Your account has been successfully created.", [{ text: "OK", onPress: () => navigation.navigate("HomeScreen") }]);
-     } else {
-       console.log("No matching membership request found.");
-       Alert.alert("Error", "No matching membership request found.");
-     }
-   } catch (error) {
-     if (error.code === 'auth/email-already-in-use') {
-       // If the email is already in use, prompt the user to login instead
-       Alert.alert("Account Exists", "Your account exists, kindly login to your account.", [
-         { text: "Login", onPress: () => navigation.navigate("Login") }, // Replace "LoginScreen" with your actual login screen route name
-         { text: "Cancel", style: "cancel" },
-       ]);
-     } else {
-       console.error("Error in user creation or data transfer:", error);
-       Alert.alert("Error", error.message);
-     }
-   }
- 
-   setIsLoading(false); // End loading
- };
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+  
+    setIsLoading(true); // Start loading
+  
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user; // This is the user object
+  
+      const requestRef = collection(firestore, "membership_request");
+      const q = query(requestRef, where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        for (const docSnapshot of querySnapshot.docs) {
+          const requestData = docSnapshot.data();
+  
+          // Update the user's profile with a display name. Pass the user object correctly here.
+          await updateProfile(user, {
+            displayName: requestData.name
+          });
+  
+          // Set user document in Firestore under "users" collection
+          await setDoc(doc(firestore, "users", user.uid), {
+            name: requestData.name,
+            email: requestData.email,
+            role: "member",
+          });
+  
+          // Additionally, set user document under "app_users" collection
+          await setDoc(doc(firestore, "app_users", user.uid), {
+            ...requestData,
+          });
+        }
+  
+        Alert.alert("Success", "Your account has been successfully created.", [{ text: "OK", onPress: () => navigation.navigate("HomeScreen") }]);
+      } else {
+        console.log("No matching membership request found.");
+        Alert.alert("Error", "No matching membership request found.");
+      }
+    } catch (error) {
+      console.log(error);
+      if (error.code === 'auth/email-already-in-use') {
+        // If the email is already in use, prompt the user to login instead
+        Alert.alert("Account Exists", "Your account exists, kindly login to your account.", [
+          { text: "Login", onPress: () => navigation.navigate("Login") },
+          { text: "Cancel", style: "cancel" },
+        ]);
+      } else {
+        console.error("Error in user creation or data transfer:", error);
+        Alert.alert("Error", error.message);
+      }
+    } finally {
+      setIsLoading(false); // Ensure loading is stopped regardless of outcome
+    }
+  };
+  
  
 
 
