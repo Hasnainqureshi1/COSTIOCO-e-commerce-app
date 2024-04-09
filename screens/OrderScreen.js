@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View,SafeAreaView, TouchableOpacity, BackHandler } from "react-native";
+import { StyleSheet, Text, View,SafeAreaView, TouchableOpacity, BackHandler, Alert } from "react-native";
 import React ,{useEffect, useRef, useState} from "react";
 import LottieView from "lottie-react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -34,14 +34,34 @@ const OrderScreen = () => {
   useEffect(() => {
   
   }, [showQRCode ==false]);
-const onCLose = ()=>{
-  setShowQRCode(false)
-    // Remove all previous screens and navigate to home screen
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "HomeScreen" }], // Change "HomeScreen" to your home screen's route name
-    });
-}
+
+  const onClose = ()=>{
+    setShowQRCode(false)
+      // Remove all previous screens and navigate to home screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "HomeScreen" }], // Change "HomeScreen" to your home screen's route name
+      });
+  }
+   
+  // Function to handle the close confirmation
+const confirmClose = () => {
+  Alert.alert(
+    "Download QR Code?",
+    "Before you leave, please make sure to download the QR code. This is important for your Purchasing. Do you want to continue?",
+    [
+      {
+        text: "Cancel",
+        onPress: () => console.log("Cancel Pressed"),
+        style: "cancel"
+      },
+      { text: "Yes", onPress: () => onClose() }
+    ],
+    { cancelable: false }
+  );
+};
+
+
 
   return (
     <SafeAreaView style={{ backgroundColor: "white", flex: 1 }}>
@@ -92,7 +112,7 @@ const onCLose = ()=>{
 </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.modalButton]}
-              onPress={() => onCLose()}
+              onPress={() => confirmClose()}
             >
               <Text style={styles.buttonText}>Close</Text>
             </TouchableOpacity>

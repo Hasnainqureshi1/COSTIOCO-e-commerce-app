@@ -39,7 +39,8 @@ const CartScreen = () => {
   const navigation = useNavigation();
   return (
     <ScrollView style={{ marginTop: 0, flex: 1, backgroundColor: "white" }}>
-      
+      {cart.length > 0 ? (
+        <>
 
       <View style={{ padding: 10, flexDirection: "row", alignItems: "center" }}>
         <Text style={{ fontSize: 18, fontWeight: "400" }}>Subtotal : </Text>
@@ -212,10 +213,27 @@ const CartScreen = () => {
           </View>
         ))}
       </View>
+      </>
+      ) : (
+        <View style={styles.emptyCartContainer}>
+          <Text style={styles.emptyCartText}>Your cart is empty</Text>
+        </View>
+      )}
     </ScrollView>
   );
 };
 
 export default CartScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  emptyCartContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  emptyCartText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});

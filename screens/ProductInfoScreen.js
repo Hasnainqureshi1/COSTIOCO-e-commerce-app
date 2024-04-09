@@ -160,6 +160,7 @@ const ProductInfoScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <SliderBox
+        key={product.id}
           images={product.images}
           sliderBoxHeight={350}
           dotColor="#FFEE58"
@@ -178,8 +179,8 @@ const ProductInfoScreen = () => {
 
         {/* Reviews Section */}
         <Text style={styles.subTitle}>Reviews</Text>
-        {reviews.map((review) => (
-          <View key={review.id} style={styles.review}>
+        {reviews.map((review,i) => (
+          <View key={i} style={styles.review}>
             <View>
 
             </View>
