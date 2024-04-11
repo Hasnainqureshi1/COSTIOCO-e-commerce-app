@@ -21,7 +21,7 @@ import { useNavigation } from "@react-navigation/native";
 
 const CartScreen = () => {
   const cart = useSelector((state) => state.cart.cart);
-  
+  console.log("underneath is the cart detailss............................")
  console.log(cart)
   const total = cart
     ?.map((item) => item.price * item.quantity)

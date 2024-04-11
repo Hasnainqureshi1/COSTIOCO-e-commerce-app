@@ -39,6 +39,7 @@ import {
   limit,
   orderBy,
   query,
+  where,
 } from "firebase/firestore";
 // import { UserType } from "../UserContext";
 // import jwt_decode from "jwt-decode";
@@ -84,7 +85,11 @@ const HomeScreen = () => {
   //fetching categories
   const fetchShops = async () => {
     setloading(true);
-    const querySnapshot = await getDocs(collection(firestore, "shop"));
+    // Construct a query to fetch only shops where isActive is true
+const shopsCollectionRef = collection(firestore, "shop");
+const activeShopsQuery = query(shopsCollectionRef, where("isActive", "==", true));
+
+const querySnapshot = await getDocs(activeShopsQuery);
     const allCategories = [];
 
     querySnapshot.forEach((doc) => {
@@ -106,19 +111,20 @@ const HomeScreen = () => {
   const [Productloading, setProductLoading] = useState(true);
   const fetchRecentProducts = async () => {
     try {
-      // Define the query to fetch the most recent products
+      // Define the query to fetch the most recent, active products
       const q = query(
         collection(firestore, "products"),
+        where("isActive", "==", true), // Ensure the product is active
         orderBy("createdAt", "desc"),
         limit(10)
       );
-
+  
       const querySnapshot = await getDocs(q);
       const recentProducts = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-
+  
       setProducts(recentProducts);
     } catch (error) {
       console.error("Failed to fetch recent products:", error);
@@ -126,6 +132,7 @@ const HomeScreen = () => {
       setProductLoading(false);
     }
   };
+  
   useEffect(() => {
     fetchShops();
     fetchBestProducts();
@@ -134,15 +141,15 @@ const HomeScreen = () => {
 
   const fetchBestProducts = async () => {
     setploading(true);
-
+  
     // Fetch all reviews
     const reviewsQuery = query(collection(firestore, "reviews"));
     const reviewsSnapshot = await getDocs(reviewsQuery);
-
+  
     // Aggregate reviews by product_id and calculate total count and average rating
     const reviewAggregates = reviewsSnapshot.docs.reduce((acc, doc) => {
       const { prod_id, rating } = doc.data();
-
+  
       if (!acc[prod_id]) {
         acc[prod_id] = { totalReviews: 0, totalRating: 0 };
       }
@@ -150,7 +157,7 @@ const HomeScreen = () => {
       acc[prod_id].totalRating += rating;
       return acc;
     }, {});
-
+  
     // Prepare data with average ratings
     const productsWithReviews = Object.entries(reviewAggregates)
       .map(([productId, { totalReviews, totalRating }]) => ({
@@ -158,37 +165,37 @@ const HomeScreen = () => {
         totalReviews,
         averageRating: totalRating / totalReviews,
       }))
-      .sort((a, b) => b.totalReviews - a.totalReviews); // Sort by totalReviews in descending order
-
+      .sort((a, b) => b.averageRating - a.averageRating || b.totalReviews - a.totalReviews); // Sort primarily by averageRating, then by totalReviews
+  
     // Fetch products by sorted order of productIds that have reviews
     const fetchedProducts = await Promise.all(
-      productsWithReviews.map(
-        async ({ productId, totalReviews, averageRating }) => {
-          const productRef = doc(firestore, "products", productId);
-          const productSnap = await getDoc(productRef);
-          console.log(productSnap.data());
-          if (productSnap.exists()) {
-            return {
-              id: productSnap.id,
-              ...productSnap.data(),
-              totalReviews,
-              averageRating,
-              productId,
-            };
-          } else {
-            return null; // Handle case where product might not exist
-          }
+      productsWithReviews.map(async ({ productId }) => {
+        const productRef = doc(firestore, "products", productId);
+        const productSnap = await getDoc(productRef);
+  
+        if (productSnap.exists() && productSnap.data().isActive) {
+          const productData = productSnap.data();
+          return {
+            id: productSnap.id,
+            ...productData,
+            productId,
+          };
+        } else {
+          return null; // Handle case where product might not exist or isn't active
         }
-      )
+      })
     );
-
-    // Filter out any null entries (in case some products didn't exist)
+  
+    // Filter out any null entries (in case some products didn't exist or weren't active)
     const validProducts = fetchedProducts.filter((product) => product !== null);
-
+  
+    // You might want to consider further sorting or filtering here based on your requirements
+  
     console.log("Valid Products with Reviews", validProducts);
     setProducts1(validProducts);
     setploading(false);
   };
+  
 
   const cart = useSelector((state) => state.cart.cart);
 

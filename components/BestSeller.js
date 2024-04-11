@@ -3,32 +3,9 @@ import { View, Text, FlatList, Image, StyleSheet, Pressable, ActivityIndicator }
 import { MaterialIcons } from '@expo/vector-icons';
 import style from '../Style/style';
 import { useNavigation } from '@react-navigation/native';
-import { collection, query, getDocs, limit } from 'firebase/firestore';
+import { collection, query, getDocs, limit ,where} from 'firebase/firestore';
 import {  firestore } from "../firebase/config";
-const bestSellers = [
-  {
-    id: '1',
-    imageUri: 'https://via.placeholder.com/150',
-    shopName: 'Shop One',
-    category:"Category",
-    rating:"4",
-  },
-  {
-    id: '2',
-    imageUri: 'https://via.placeholder.com/150',
-    shopName: 'Shop Two',
-    category:"Category",
-    rating:"4",
-  },
-  {
-    id: '3',
-    imageUri: 'https://via.placeholder.com/150',
-    shopName: 'Shop Three',
-    category:"Category",
-    rating:"0",
-  },
-  // Add more items as needed
-];
+ 
 
 
 
@@ -39,19 +16,32 @@ const [loading, setloading] = useState(true)
 
  useEffect(() => {
   const fetchShops = async () => {
-    setloading(true)
-    console.log("fetchedShops");
-    const q = query(collection(firestore, "shop"), limit(10));
-    console.log("fetchedShops");
-    const querySnapshot = await getDocs(q);
-    const fetchedShops = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    setShops(fetchedShops);
-    setloading(false)
-   
+    setloading(true);
+    console.log("Fetching active shops...");
+    
+    // Updated query to include only shops where isActive is true
+    const q = query(
+      collection(firestore, "shop"),
+      where("isActive", "==", true),
+      limit(10)
+    );
+    
+    try {
+      const querySnapshot = await getDocs(q);
+      const fetchedShops = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+  
+      console.log("Fetched Shops:", fetchedShops);
+      setShops(fetchedShops);
+    } catch (error) {
+      console.error("Error fetching active shops:", error);
+    } finally {
+      setloading(false);
+    }
   };
+  
 
   fetchShops();
 }, []);

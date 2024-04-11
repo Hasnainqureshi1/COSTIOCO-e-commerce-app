@@ -85,7 +85,7 @@ const PaymentForm = ({ totalItem, totalPayment, groupedItems }) => {
     console.log(totalItem);
     try {
       const response = await fetch(
-        "https://9cf9-59-103-119-73.ngrok-free.app/api/stripe/create-payment-intent",
+        "https://7d14-59-103-119-73.ngrok-free.app/api/stripe/create-payment-intent",
         {
           method: "POST",
           body: JSON.stringify({

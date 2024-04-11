@@ -18,7 +18,7 @@ const RequestScreen = () => {
   const [email, setEmail] = useState("");
   const [number, setphone] = useState("");
   const [name, setName] = useState("");
-  const [avg_salary, setAvgSalary] = useState("");
+  
   const [city, setCity] = useState("");
   const [occupation, setOccupation] = useState("");
   const [responseMessage, setResponseMessage] = useState("");
@@ -26,7 +26,7 @@ const RequestScreen = () => {
 
   const navigation = useNavigation();
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !number.trim() || !avg_salary.trim() || !city.trim() || !occupation.trim()) {
+    if (!name.trim() || !email.trim() || !number.trim()  || !city.trim() || !occupation.trim()) {
       setResponseMessage("All fields are required.");
       return; // Stop the function if any field is empty
     }
@@ -59,7 +59,7 @@ const RequestScreen = () => {
         name: name,
         email: email,
         number: number,
-        avg_salary: parseInt(avg_salary, 10), // Ensuring avg_salary is stored as an integer
+   
         city: city,
         date: currentDate, // Using the current Firestore Timestamp
         occupation: occupation,
@@ -117,18 +117,7 @@ const RequestScreen = () => {
             onChangeText={setEmail}
             placeholder="your Email"
           />
-
-        
-
-          {/* Average Salary Input */}
-          <TextInputField
-            icon="payments"
-            value={avg_salary}
-            onChangeText={setAvgSalary}
-            placeholder="your average salary"
-            keyboardType="numeric"
-          />
-
+ 
           {/* City Input */}
           <TextInputField
             icon="home"
