@@ -49,10 +49,7 @@ const YourAccountScreen = () => {
        <Text style={styles.detailTitle}>Email:</Text>
        <Text style={styles.detailValue}>{userData.email}</Text>
      </View>
-     <View style={styles.detailItem}>
-       <Text style={styles.detailTitle}>Average Salary:</Text>
-       <Text style={styles.detailValue}>{userData.avg_salary}</Text>
-     </View>
+     
      <View style={styles.detailItem}>
        <Text style={styles.detailTitle}>City:</Text>
        <Text style={styles.detailValue}>{userData.city}</Text>

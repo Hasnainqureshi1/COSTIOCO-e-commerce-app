@@ -19,51 +19,53 @@ const UserReviews = () => {
  }, []);
 
   useEffect(() => {
-    const fetchOrdersAndReviews = async () => {
-     if(userId){
-setloading(true);
+ 
+      const fetchOrdersAndReviews = async () => {
+        if (userId) {
+          setloading(true);
+          try {
+            const ordersRef = collection(firestore, 'orders');
+            const ordersQuery = query(ordersRef, where('user_id', '==', userId), where('status', '==', 'completed'));
+            const ordersSnapshot = await getDocs(ordersQuery);
+            let productIds = [];
     
-      const ordersRef = collection(firestore, 'orders');
-      const ordersQuery = query(ordersRef, where('user_id', '==', userId), where('status', '==', 'completed'));
-      const ordersSnapshot = await getDocs(ordersQuery);
-      let productIds = [];
-
-      for (const orderDoc of ordersSnapshot.docs) {
-        const orderData = orderDoc.data();
-        console.log(orderData);
-        productIds = productIds.concat(orderData.products.map(product => product.prod_id));
-        console.log(productIds);
-        console.log(productIds);
-      }
-
-      const reviewsRef = collection(firestore, 'reviews');
-      const reviewsQuery = query(reviewsRef, where('user_id', '==', userId), where('prod_id', 'in', productIds));
-      const reviewsSnapshot = await getDocs(reviewsQuery);
-      const reviewedProductIds = reviewsSnapshot.docs.map(doc => doc.data().prod_id);
-
-      for (const productId of productIds) {
-       if (!reviewedProductIds.includes(productId)) {
-         console.log("productId");
-         console.log(productId);
-     
-         // Reference the product document directly by its ID
-         const productRef = doc(firestore, 'products', productId);
-         const productSnapshot = await getDoc(productRef);
-     
-         if (productSnapshot.exists()) { // Check if the document exists
-           console.log("ProductSnapshot");
-           console.log(productSnapshot.data());
-     
-           const productData = productSnapshot.data();
-           setProducts(prevProducts => [...prevProducts, { ...productData, prod_id: productId }]);
-         } else {
-           console.log("No product found for ID:", productId);
-         }
-       }
-     }
-     }
-     setloading(false);
-    };
+            ordersSnapshot.docs.forEach(orderDoc => {
+              const orderData = orderDoc.data();
+              productIds = [...new Set([...productIds, ...orderData.products.map(product => product.prod_id)])];
+            });
+    
+            if (productIds.length === 0) {
+              // No products to fetch reviews for, so we can stop here
+              setloading(false);
+              return;
+            }
+    
+            const reviewsRef = collection(firestore, 'reviews');
+            const reviewsQuery = query(reviewsRef, where('user_id', '==', userId), where('prod_id', 'in', productIds));
+            const reviewsSnapshot = await getDocs(reviewsQuery);
+            const reviewedProductIds = reviewsSnapshot.docs.map(doc => doc.data().prod_id);
+    
+            for (const productId of productIds) {
+              if (!reviewedProductIds.includes(productId)) {
+                const productRef = doc(firestore, 'products', productId);
+                const productSnapshot = await getDoc(productRef);
+    
+                if (productSnapshot.exists()) {
+                  const productData = productSnapshot.data();
+                  setProducts(prevProducts => [...prevProducts, { ...productData, prod_id: productId }]);
+                }
+              }
+            }
+          } catch (error) {
+            console.error("An error occurred while fetching orders and reviews:", error);
+          } finally {
+            setloading(false);
+          }
+        }
+      };
+    
+    
+    
 
     fetchOrdersAndReviews();
   }, [userId]);

@@ -2,9 +2,6 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import LoginScreen from "../screens/LoginScreen";
-import RegisterScreen from "../screens/RequestScreen";
-// import HomeScreen from "../screens/HomeScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
@@ -14,6 +11,9 @@ import RequestScreen from "../screens/RequestScreen";
 import SetPasswordScreen from "../screens/SetPasswordScreen";
 import HomeScreen from "../screens/HomeScreen";
 import CategoryScreen from "../screens/CategoryScreen";
+import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RequestScreen";
+// import HomeScreen from "../screens/HomeScreen";
 // import ProductInfoScreen from "../screens/ProductInfoScreen";
  
 // import CartScreen from "../screens/CartScreen";
@@ -108,7 +108,7 @@ const StackNavigator = () => {
           component={BottomTabs}
           options={{
             headerShown: true,
-            headerTitle:'COSTICO'
+            headerTitle:'COSTCO'
             // headerTitle: () => <Search />,
             // Adjust other header options as needed
           }}
@@ -116,7 +116,13 @@ const StackNavigator = () => {
         <Stack.Screen
           name="CategoryScreen"
           component={CategoryScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: true,
+            headerTitle:'',
+            headerTitleAlign: 'center',
+            // headerTitle: () => <Search />,
+            // Adjust other header options as needed
+          }}
         />
         
          <Stack.Screen

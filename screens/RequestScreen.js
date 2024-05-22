@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -18,7 +19,10 @@ const RequestScreen = () => {
   const [email, setEmail] = useState("");
   const [number, setphone] = useState("");
   const [name, setName] = useState("");
-  
+  const [messages, setMessages] = useState([
+    "Please Visit the nearest store",
+    "to complete registration process."
+  ]);
   const [city, setCity] = useState("");
   const [occupation, setOccupation] = useState("");
   const [responseMessage, setResponseMessage] = useState("");
@@ -76,6 +80,13 @@ const RequestScreen = () => {
         setResponseMessage('')
       }, 4000);
       setIsLoading(false);
+      const message = messages.join('\n');
+      Alert.alert(
+        "Attention",
+        message,
+        [{ text: "OK", onPress: () => console.log("OK pressed") }],
+        { cancelable: false }
+      );
     } catch (error) {
       console.error("Error adding document: ", error);
       setResponseMessage("Failed to submit your registration request.");

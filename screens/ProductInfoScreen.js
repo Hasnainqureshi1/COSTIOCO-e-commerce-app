@@ -174,7 +174,7 @@ const ProductInfoScreen = () => {
         {/* shop info  */}
         <View style={styles.shopInfo}>
     <Text style={styles.shopName}>Store Name: {shop?.storeName}</Text>
-    <Text style={styles.shopName}>Address: {shop?.address}</Text>
+    
         </View>
 
         {/* Reviews Section */}
